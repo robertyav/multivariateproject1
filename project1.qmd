@@ -3,25 +3,113 @@ title: "MATH 257 Project I: Why use multivariate data analysis? - A Comparison b
 author: "Robert Yav"
 format: pdf
 editor: visual
+references: TRUE
 ---
 
-## Quarto
+## Introduction
+The introduction briefly describes to the reader 1) the key research question
+or knowledge gap that is addressed by the study; 2) the data used for this study; 3) the
+methods used to investigate the research question; and 4) the key findings and why they
+are important. Three to four paragraphs should be sufficient.
+
+Why do we use multivariate data analysis? When conducting inference through hypothesis testing, we require a factorable degree of uncertainty when dealing with sample data. This likely isn't a big surprise When you have multiple response variables that aren't perfectly correlated, standard confidence intervals do not offer calibrated simultaneous coverage. Confidence regions do offer accurate coverage guarantees in multiple dimensions, but they are challenging to describe and use.
+
+
+Recall the univariate t-based confidence interval for a population mean:
+
+$$\bar{x}\pm t_{n-1}(\alpha/2)\frac{s}{\sqrt{n}}$$
+This confidence interval rejects all values of $\mu_0$ outside of its bounds and accepts all values of $\mu_0$ inside its bounds, corresponding to the null hypothesis $$H_0: \mu=\mu_0$$
+A region, $R(\mathbf{X})$ is said to be a 100(1-$\alpha$)% confidence region if, before the sample is selected,
+$P(R(X)$ will cover the true $\theta ) = 1-\alpha$
+
+## Data
+This section should 1) describe the observational units of the dataset; 2) introduce
+all relevant variables; 3) describe any relevant details about how the data were generated
+or collected (and if necessary, transformed); and 4) highlight any critical characteristics
+of the data, possibly by using visualizations or summary tables
+
+We generate the data matrix $X$ using the multivariate normal distribution with mean $\mu=0$ and a variable covariance matrix.
+
+## Methods
+The paper should present the univariate and multivariate methods used in
+your analysis clearly using mathematical notation and plain English explanations. Every
+symbol and component of the models should be introduced and described. Your target
+reader should be a peer in this class. Focus on 1) clearly explaining the key distinctions
+between the univariate/multivariate methods; 2) explaining how you will compare the
+methods using your data; and 3) describing what you expect to see in your results (and
+why).
+
+
+
+## Results
+The results section should describe the fitted models and the results of analysis.
+This section should include relevant tables, graphs, and quantitative results, as well as
+plain English explanations of all of these components, but should not include raw R
+output. Clearly explain what the results show and interpret them in the context of your
+research question
+
+
+## Discussion
+
+In the final section of the paper, briefly summarize your key findings, discuss
+potential weaknesses of your study, and identify potential improvements and extensions
+or future areas of related research.
+
+
+## References
 
 Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
 
+
 ## Running Code
 
-When you click the **Render** button a document will be generated that includes both content and the output of embedded code. You can embed code like this:
-
 ```{r}
-1 + 1
+library(MASS)
+n = 1000
+mu = c(x1=5,x2=10,x3=-2)
+Sigma <- matrix(c(1.0, 0.5, 0.2,
+                  0.5, 2.0, 0.8,
+                  0.2, 0.8, 1.5), 
+                nrow = 3, ncol = 3)
+
+# Set seed for reproducibility
+set.seed(0)
+
+# 4. Generate the multivariate normal data
+simulated_data <- mvrnorm(n = n, mu = mu, Sigma = Sigma)
+
+# View the first few rows
+head(simulated_data) 
+
+# Bivariate normal data (1)
+library(mvtnorm)
+mu = c(x1=0,x2=0)
+Sigma = matrix(c(1, .33,
+                 .33, 1), nrow=2)
+nrow = 2
+ncol = 2
+alpha = 0.05
+data = rmvnorm(n=n,mean=mu,sigma=Sigma) |>
+  as.data.frame()
+
+xbar = colMeans(data)
+S=cov(data)
+
+confint_x1 = t.test(data$x1)$conf.int
+confint_x2 = t.test(data$x2)$conf.int
+Fcrit = qf(1-alpha,df1=p,df2=n-p)
+critical_stat = (p*(n-1))/((n-p)) * Fcrit
+
+eig = eigen(S/n)
+L = eig$vectors %*% diag(sqrt(eig$values))
+theta = seq(0,2*pi, length.out=200)
+unit_circle = rbind(cos(theta),sin(theta))
+ellipse_pts = t(xbar+sqrt(critical_stat)*L %*% unit_citcle)
+colnames(ellipse_pts) = c("x1","x2")
+ellipse_df = as.data.frame(ellipse_pts)
+
+confint_x1.
+
+###
 ```
-
-You can add options to executable code like this
-
-```{r}
-#| echo: false
-2 * 2
-```
-
-The `echo: false` option disables the printing of code (only output is displayed).
+s
