@@ -1,99 +1,148 @@
 ---
-title: "MATH 257 Project I: Why use multivariate data analysis? - A Comparison between Univariate Confidence Intervals and Confidence Regions"
+title: "Why use multivariate data analysis?"
+subtitle: "A Comparison between Multiple Univariate Confidence Intervals and Multivariate Confidence Regions"
 author: "Robert Yav"
-format: pdf
+format: 
+  pdf:
+    include-in-header:
+      text:
+        \usepackage{amsmath}
 editor: visual
 references: TRUE
+number-sections: TRUE
+bibliography: references.bib
 ---
 
+```{r}
+#| echo: false
+#| message: false
+#| error: false
+#| warning: false
+library(mvtnorm)
+library(ggpubr)
+```
+
 ## Introduction
-The introduction briefly describes to the reader 1) the key research question
-or knowledge gap that is addressed by the study; 2) the data used for this study; 3) the
-methods used to investigate the research question; and 4) the key findings and why they
+The introduction briefly describes to the reader 
+1) the key research question
+or knowledge gap that is addressed by the study; 
+2) the data used for this study; 
+3) the methods used to investigate the research question; and 
+4) the key findings and why they
 are important. Three to four paragraphs should be sufficient.
 
-Why do we use multivariate data analysis? When conducting inference through hypothesis testing, we require a factorable degree of uncertainty when dealing with sample data. This likely isn't a big surprise When you have multiple response variables that aren't perfectly correlated, standard confidence intervals do not offer calibrated simultaneous coverage. Confidence regions do offer accurate coverage guarantees in multiple dimensions, but they are challenging to describe and use.
+**Why do we use multivariate data analysis?** When conducting inference through hypothesis testing, we require a quantifiable degree of uncertainty when dealing with sample data. The traditional way of doing this is through confidence intervals. Confidence intervals generate a range of values with a level of certainty to contain a true value of a population parameter from sample data. However, these intervals are only bounding one dimension at once. It is established that real world data is typically multifaceted, complex, and can't easily be oversimplified to any one factor or population.
 
+The new problem becomes so: **How can we generate a "confidence interval" for multiple populations?** The naive way of solving this issue is to just generate multiple confidence intervals for each population. However, this approach arises several concerns:
 
-Recall the univariate t-based confidence interval for a population mean:
+1. Each interval is computed from its respective variable only, which forms a rectangle. This approach does not take into account correlation between variables, which would not offer guarantees in multiple dimensions.
 
-$$\bar{x}\pm t_{n-1}(\alpha/2)\frac{s}{\sqrt{n}}$$
-This confidence interval rejects all values of $\mu_0$ outside of its bounds and accepts all values of $\mu_0$ inside its bounds, corresponding to the null hypothesis $$H_0: \mu=\mu_0$$
-A region, $R(\mathbf{X})$ is said to be a 100(1-$\alpha$)% confidence region if, before the sample is selected,
-$P(R(X)$ will cover the true $\theta ) = 1-\alpha$
+2. Family error-rate is not controlled, and increases with each additional (simultaneous) population estimated under independence. At p = 2 intervals with 95% confidence, we get a joint coverage of $.95^2=.9025$ at a family-wise error rate of 9.8%. at p = 5, joint coverage drops to $.95^5\sim.7738$ at a family-wise error-rate of 22.6%.
 
-## Data
-This section should 1) describe the observational units of the dataset; 2) introduce
-all relevant variables; 3) describe any relevant details about how the data were generated
-or collected (and if necessary, transformed); and 4) highlight any critical characteristics
+In this report, we introduce the idea of the confidence region and how these issues are addressed. We show that a confidence region (ellipsoid) can offer calibrated simultaneous coverage of multiple parameters without simultaneous testing correction. We perform a simulation of p-variate multivariate normal data and compare the accuracy of multiple confidence intervals to a confidence region. We show that a confidence region is more accurate on average and visualize the overarching geometric advantage that a confidence region has over simultaneous confidence intervals.
+
+The region generated factors in correlation between variables, providing more accurate predictive areas. The limitation of confidence regions is that in higher dimensional settings, the region becomes difficult to describe and use compared to simultaneous univariate confidence regions.
+
+@sec-data introduces how the simulated data is generated. @sec-methods introduces the mathematical formulations behind confidence intervals and regions, as well as how each method will be compared. @sec-results shows the findings for the comparisons between our methods, and @sec-discussion discusses the significance of our findings in the simulation.
+
+## Data {#sec-data}
+This section should 
+1) describe the observational units of the dataset; 
+2) introduce
+all relevant variables; 
+3) describe any relevant details about how the data were generated
+or collected (and if necessary, transformed); and 
+4) highlight any critical characteristics
 of the data, possibly by using visualizations or summary tables
 
-We generate the data matrix $X$ using the multivariate normal distribution with mean $\mu=0$ and a variable covariance matrix.
+We generate the data matrix $\mathbf{X}$ using the 2-dimensional multivariate normal distribution  choosing n = 50, mean $\boldsymbol{\mu}^T = \begin{bmatrix} 0 & 0\end{bmatrix}$ and a variable covariance and diagonal variance of ones. This simplifies our example, as the correlation between our columns just becomes the value of the covariance in the off-diagonals, and all assumptions required of standard confidence intervals and regions are satisfied. We define correlation to be
 
-## Methods
+$$p_{ij}=\frac{Cov(x_1,x_2)}{\sigma_{x_1}\sigma_{x_2}}$$
+```{r}
+#| echo: false
+set.seed(0)
+simulate <- function(rho) {
+  n=50
+  mu = c(0,0)
+  Sigma = matrix(c(1,rho,
+                  rho,1), nrow=2)
+  data = rmvnorm(n,mean=mu,sigma=Sigma) |> as.data.frame()
+  colnames(data) = c("x1","x2")
+  return(data)
+}
+```
+
+The result is a multivariate normally-distributed population with 50 observations
+
+$$\mathbf{X}\sim N_2(\mathbf{\mu}=\begin{bmatrix} 0\\0\end{bmatrix},\mathbf{\Sigma}=\begin{bmatrix} 1&\rho\\ \rho&1\end{bmatrix})$$
+
+For a high correlation of $\rho = .9$, a sample of $n = 50$ observations would look like 
+
+``` {r fig-high-correlation}
+#| echo: false
+#| fig-pos: "H"
+#| fig-cap: "Fit of x1 against x2 in High Correlated Environment "
+#Code generating multivariate normals here and plot x1 against x2
+high_cor = simulate(.9)
+ggplot(data=high_cor) +
+  geom_point(aes(x=x1,y=x2))
+```
+
+For a low correlation of $\rho = .05$, a sample of $n =50$ observations would look like 
+```{r fig-low-correlation}
+#| echo: false
+#| fig-pos: "H"
+#| fig-cap: "Fit of x1 against x2 in Low Correlated Environment "
+low_cor = simulate(0.05)
+ggplot(data=low_cor) +
+  geom_point(aes(x=x1,y=x2))
+
+```
+
+## Methods {#sec-methods}
 The paper should present the univariate and multivariate methods used in
 your analysis clearly using mathematical notation and plain English explanations. Every
 symbol and component of the models should be introduced and described. Your target
-reader should be a peer in this class. Focus on 1) clearly explaining the key distinctions
-between the univariate/multivariate methods; 2) explaining how you will compare the
-methods using your data; and 3) describing what you expect to see in your results (and
-why).
+reader should be a peer in this class. Focus on 
+1) clearly explaining the key distinctions
+between the univariate/multivariate methods; 
+2) explaining how you will compare the
+methods using your data; and 
+3) describing what you expect to see in your results (and why).
 
+Recall the univariate (100(1-$\alpha$))% t-based confidence interval for a population mean with significance level $\alpha$, sample size n, sample standard deviation s, and $t_{n-1}(\alpha/2)$ is the critical value of the t distribution with df=n-1:
 
+$$\bar{x}\pm t_{n-1}(\alpha/2)\frac{s}{\sqrt{n}}$$
+This confidence interval rejects all values of $\mu_0$ outside of its bounds and accepts all values of $\mu_0$ inside its bounds, corresponding to the null hypothesis $$H_0: \mu=\mu_0$$ and alternative hypothesis $$H_1: \mu\neq\mu_0$$
 
-## Results
+A confidence region for the mean vector of a p-dimensional normal distribution is the ellipsoid containing all $\mu$ such that
+$$n(\bar{x}-\mu)^TS^{-1}(\bar{x}-\mu)\leq\frac{p(n-1)}{(n-p)}F_{p,n-p}(\alpha)$$
+where $\boldsymbol{\bar{x}}$ and $\mathbf{S}$ are the sample mean vector and sample covariance matrix, $\boldsymbol{\mu}$ is the population mean vector and $F_{(n,n-p)}(\alpha)$ is the critical value of the F distribution with n, n-p df. This is analogous to the null hypothesis $$H_0: \boldsymbol{\mu}=\boldsymbol{\mu_0}$$ and alternative hypothesis $$H_1: \boldsymbol{\mu}\neq\boldsymbol{\mu_0}$$
+
+the region rejects all values of $\boldsymbol{\mu}$ outside of its bounds and accepts all values of $\boldsymbol{\mu}$ inside of its bounds.
+
+We will begin by generating and comparing confidence intervals and confidence regions for both our lowly-correlated and highly-correlated data. On bivariate data, the "joint" confidence intervals form a bounding rectangle, while the confidence region's geometry forms an ellipse. We then will continue with a high-volume simulation comparing the two methods as correlation increases. We expect that since the joint-confidence intervals are essentially performing two separate tests, the joint coverage will start at $.95^2=.9025$ and rise with $\rho$ while the confidence region's coverage will stay the same.
+
+We implement the analysis using @r. Multivariate normal data generated with @mvtnorm. Plots done with
+@ggpubr. The $T^2$ based confidence region for a mean vector and univariate t-based confidence interval follows @johnson2007applied. 
+
+## Results {#sec-results}
 The results section should describe the fitted models and the results of analysis.
 This section should include relevant tables, graphs, and quantitative results, as well as
 plain English explanations of all of these components, but should not include raw R
 output. Clearly explain what the results show and interpret them in the context of your
 research question
 
-
-## Discussion
-
-In the final section of the paper, briefly summarize your key findings, discuss
-potential weaknesses of your study, and identify potential improvements and extensions
-or future areas of related research.
-
-
-## References
-
-Quarto enables you to weave together content and executable code into a finished document. To learn more about Quarto see <https://quarto.org>.
-
-
-## Running Code
-
 ```{r}
-library(MASS)
-n = 1000
-mu = c(x1=5,x2=10,x3=-2)
-Sigma <- matrix(c(1.0, 0.5, 0.2,
-                  0.5, 2.0, 0.8,
-                  0.2, 0.8, 1.5), 
-                nrow = 3, ncol = 3)
+#| echo: false
+#| fig-pos: "H"
 
-# Set seed for reproducibility
-set.seed(0)
-
-# 4. Generate the multivariate normal data
-simulated_data <- mvrnorm(n = n, mu = mu, Sigma = Sigma)
-
-# View the first few rows
-head(simulated_data) 
-
-# Bivariate normal data (1)
-library(mvtnorm)
-mu = c(x1=0,x2=0)
-Sigma = matrix(c(1, .33,
-                 .33, 1), nrow=2)
-nrow = 2
-ncol = 2
-alpha = 0.05
-data = rmvnorm(n=n,mean=mu,sigma=Sigma) |>
-  as.data.frame()
-
+chart <- function(data) {
+n=nrow(data)
+p=ncol(data)
 xbar = colMeans(data)
 S=cov(data)
+alpha=0.05
 
 confint_x1 = t.test(data$x1)$conf.int
 confint_x2 = t.test(data$x2)$conf.int
@@ -104,12 +153,110 @@ eig = eigen(S/n)
 L = eig$vectors %*% diag(sqrt(eig$values))
 theta = seq(0,2*pi, length.out=200)
 unit_circle = rbind(cos(theta),sin(theta))
-ellipse_pts = t(xbar+sqrt(critical_stat)*L %*% unit_citcle)
+ellipse_pts = t(xbar+sqrt(critical_stat)*L %*% unit_circle)
 colnames(ellipse_pts) = c("x1","x2")
 ellipse_df = as.data.frame(ellipse_pts)
 
-confint_x1.
+rect_df <- data.frame(
+  xmin = confint_x1[1], xmax = confint_x1[2],
+  ymin = confint_x2[1],    ymax = confint_x2[2]
+)
 
-###
+
+ggplot() +
+  geom_point(data=data,aes(x=x1, y=x2),color="grey") +
+  geom_polygon(data=ellipse_df,
+               aes(x=x1, y=x2),
+               fill="steelblue",alpha=.25,linewidth=0.8) +
+  geom_point(aes(x=xbar["x1"],y=xbar["x2"]),color="black",size=1.5) +
+  geom_rect(data = rect_df,
+            aes(xmin = xmin, xmax = xmax, ymin = ymin, ymax = ymax),
+            fill = NA, color = "darkorange", linetype = "dashed", linewidth = 0.8)
+  
+}
+
+
 ```
-s
+
+@fig-low-cor-analysis and @fig-high-cor-analysis show the confidence region and intervals for our two observations, x1 and x2, projected onto one sample of our low and high correlated data. There are a couple things to note:
+
+1. The bounding box generated by the confidence intervals representing the respective sample parameters contains the area associated with ellipsoid confidence regions, but also includes "corners" taht the ellipse excludes. 
+
+2. The confidence region generated with low-correlated data is more circular in nature than the high-correlated data, which is more elongated. Due to this elongation, there seems to be larger "corners" in the high-correlated data.
+
+``` {r fig-low-cor-analysis} 
+#| echo: false
+#| fig-cap: "Bivariate normal data with low correlation"
+chart(low_cor)
+```
+
+```{r fig-high-cor-analysis}
+#| echo: false
+#| fig-pos: "H"
+#| fig-cap: "Bivariate normal data with high correlation"
+chart(high_cor)
+```
+
+We generate the situation above with variate correlations at 10000 simulations each to show how as the correlations change, the confidence intervals fail at 95% confidence while the confidence regions hold.
+
+@fig-confidence-comparison shows a simulation of 10,000*10 different size n = 50 samples of data, starting at 10,000 samples at $\rho = 0$ and 10,000 additional samples for each additional $\rho = \rho_0 + 0.1$ as $\rho$ increases at 95% confidence. As hypothesized, the confidence region maintains 95% coverage while the joint confidence interval "region" coverage slowly increases as $\rho$ increases.
+
+```{r fig-confidence-comparison}
+#| echo: false
+#| fig-cap: "Evaluating the confidence region and interval performance on average for 10000 iterations and as rho increases for confidence level .95"
+save_sim_conf <- function(rho) {
+  mu=c(0,0)
+  Sigma=matrix(c(1,rho,rho,1),nrow=2)
+  data = simulate(rho)
+  n = nrow(data)
+  p = ncol(data)
+  xbar = colMeans(data)
+  S = cov(data)
+  alpha = 0.05
+  confint_x1 = t.test(data$x1)$conf.int
+  confint_x2 = t.test(data$x2)$conf.int
+  interval_cov = 0 > confint_x1[1] & 0 < confint_x1[2] &
+           0 > confint_x2[1] & 0 < confint_x2[2]
+  Fcrit <- qf(1 - alpha, df1 = p, df2 = n - p)
+  c2 <- (p * (n - 1) / (n - p)) * Fcrit
+  region_cov <- n * t(xbar - mu) %*% solve(S, xbar - mu) <= c2
+  return(c(interval_cov, region_cov))
+}
+
+n_sim = 10000
+rho_seq = seq(0,.9, by=.1)
+int_coverage_rates = numeric(length(rho_seq))
+reg_coverage_rates = numeric(length(rho_seq))
+
+for (x in 1:length(rho_seq)) {
+  rho = rho_seq[x]
+  sims = replicate(n_sim,save_sim_conf(rho))
+  int_coverage_rates[x] = mean(sims[1,])
+  reg_coverage_rates[x] = mean(sims[2,]) 
+}
+
+out_dat = data.frame(
+  rho=rep(rho_seq,2),
+  coverage = c(int_coverage_rates,reg_coverage_rates),
+  method=rep(c("Intervals","Ellipse"),each=length(rho_seq)))
+ggplot(out_dat,aes(x=rho,y=coverage,color=method)) + geom_line()
+
+
+```
+
+
+## Discussion {#sec-discussion}
+
+In the final section of the paper, briefly summarize your key findings, discuss
+potential weaknesses of your study, and identify potential improvements and extensions
+or future areas of related research.
+
+Multivariate confidence regions account for correlation. Univariate confidence intervals do not. In @fig-confidence-comparison, the confidence interval approach at $\rho = 0$ had a joint coverage of .9025, which seemed to improve as $\rho$ increased. However, in @fig-low-cor-analysis and @fig-high-cor-analysis, the "corners" that the ellipse did not share with the bounding box were due to the confidence intervals' failure to account for correlation within the data.
+
+We simulated only bivariate data with a set sample size (n=50), equal variances, and only one confidence level for the sake of simplicity. One could extend this simulation to include variation in sample size, variance, and confidence level to get a complete picture of how correlation interacts with univariate confidence intervals.
+When using multiple univariate confidence intervals, the probability of at least one confidence interval missing inflates with the addition of each additional variable. One could extend this simulation to include how the joint coverage of each additional interval in say, a p-variate normal distribution, gets worse as $\rho$ grows. Another extension could include an additional comparison with Bonferroni-corrected confidence intervals as the number of dimensions increase.
+
+
+
+## References
+
