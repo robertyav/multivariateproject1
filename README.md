@@ -14,7 +14,10 @@ Multivariate normal data was simulated using mvtnorm, a library for R.
 * Dr. Gao's slide deck (04-multivariate-normal) and associated code
 
 ## File Structure
-project1.pdf: is the final render of the project report
-project1.qmd: is the raw markdown and code of the project
-references.bib: contains the references
-project1_cache/pdf, project1_files/figure-pdf: contain figure and cache files for the render to reduce load times.
+**project1.pdf:** is the final render of the project report
+
+**project1.qmd:** is the raw markdown and code of the project
+
+**references.bib:** contains the references
+
+**project1_cache/pdf, project1_files/figure-pdf:** contain figure and cache files for the render to reduce load times.
