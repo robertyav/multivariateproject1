@@ -1,5 +1,5 @@
-# MATH 257 Project 1: Why use multivariate data analysis?
- - A comparison between Multiple Univariate Confidence Intervals and Multivariate Confidence Regions
+# MATH 257 Project 1: Why use multivariate data analysis? A comparison between Multiple Univariate Confidence Intervals and Multivariate Confidence Regions
+
 Date of submission: 11/5/2026
 ## Data 
 
