@@ -1,11 +1,12 @@
-# MATH 257 Project 1: Why use multivariate data analysis? - A comparison between Multiple Univariate Confidence Intervals and Multivariate Confidence Regions
+# MATH 257 Project 1: Why use multivariate data analysis?
+## A comparison between Multiple Univariate Confidence Intervals and Multivariate Confidence Regions
 
 Date of submission: 11/5/2026
-## Data 
+### Data 
 
 Multivariate normal data was simulated using mvtnorm, a library for R.
 
-## External Resources
+### External Resources
 
  The final report and code were written by Robert Yav, but the following resources were used for preliminary research:
 
@@ -13,7 +14,7 @@ Multivariate normal data was simulated using mvtnorm, a library for R.
 * Applied Multivariate Statistical Analysis (Johnson and Wichern)
 * Dr. Gao's slide deck (04-multivariate-normal) and associated code
 
-## File Structure
+### File Structure
 **project1.pdf:** is the final render of the project report
 
 **project1.qmd:** is the raw markdown and code of the project
