@@ -43,6 +43,7 @@ $$\rho = \frac{Cov(X_1,X_2)}{\sigma_{X_1}\sigma_{X_2}}$$
 
 ```{r}
 #| echo: false
+# Simulates one sample of n = 50 observations
 set.seed(0)
 simulate <- function(rho) {
   n=50
@@ -102,7 +103,7 @@ We implement the analysis using R [@r]. Multivariate normal data generated with 
 ```{r}
 #| echo: false
 #| fig-pos: "H"
-
+# Creates a bounding box from two confidence intervals and a confidence region (ellipse)
 chart <- function(data) {
 n=nrow(data)
 p=ncol(data)
@@ -164,7 +165,7 @@ chart(high_cor)
 
 We generate the situation above with varying correlations at 50,000 simulations each to show how as the correlations change, the confidence intervals falls below 95% confidence while the confidence regions hold.
 
-@fig-confidence-comparison shows a simulation of 50,000 for 13 different $\rho$ at size n = 50 samples of data, starting at 50,000 samples at $\rho = 0$ and 50,000 additional samples from 0 to .9 at steps of .1, plus at .95, .975, and .99 for 650,000 total samples at 95% confidence. As hypothesized, the confidence region maintains 95% coverage while the joint confidence interval "region" coverage slowly increases to  around .95 as $\rho$ approaches 1.
+@fig-confidence-comparison shows a simulation of 50,000 for 13 different values of $\rho$ at size n = 50 samples of data, starting at 50,000 samples at $\rho = 0$ and 50,000 additional samples from 0 to .9 at steps of .1, plus at .95, .975, and .99 for 650,000 total samples at 95% confidence. As hypothesized, the confidence region maintains 95% coverage while the joint confidence interval "region" coverage stays near .90 until about $\rho = .4$, then slowly increases to  around .95 as $\rho$ approaches 1.
 
 ```{r fig-confidence-comparison}
 #| echo: false
@@ -190,7 +191,6 @@ save_sim_conf <- function(rho) {
 }
 
 n_sim = 50000
-#rho_seq = seq(0,.9, by=.1) #Original seq
 rho_seq = c(0.0,.1,.2,.3,.4,.5,.6,.7,.8,.9,.95,.975,.99)
 int_coverage_rates = numeric(length(rho_seq))
 reg_coverage_rates = numeric(length(rho_seq))
@@ -215,7 +215,7 @@ ggplot(out_dat,aes(x=rho,y=coverage,color=method))+ scale_x_continuous(breaks = 
 
 From our simulation in @fig-confidence-comparison, the confidence interval approach at $\rho = 0$ for two confidence intervals had a joint coverage of about 90%, which rose to around 95% as $\rho$ increased for $p = 2$. Univariate confidence intervals do not account for correlation, so when one variable is strongly correlated with another, variables tend to pass and fail the intervals together, and the probability that at least one interval fails drops. The multivariate confidence region stayed at around 95% coverage as $\rho$ increased. In a real study, this is important because we do not know the true correlation between population variables. The actual joint coverage could be about 90 to 95%, and therefore the original 95% level cannot be fully trusted.
 
-Coverage is only one part of the problem. In @fig-low-cor-analysis and @fig-high-cor-analysis, the bounding box "corners" that the ellipse did not share were also due to the confidence intervals' failure to account for correlation within the data. The ellipse that the confidence region generated excludes those implausible corners by properly accounting for correlation, ruling them out. The ellipse also extends past the boxes in the direction of correlation and becomes more elongated as correlation increases. These differences are emphasized when visually comparing the area of the corners and elongated ellipses in the low and high correlation examples. At high $\rho$, a region that accounts for correlation can achieve better coverage for less wasted area than a box.
+Coverage is only one part of the problem. In @fig-low-cor-analysis and @fig-high-cor-analysis, the bounding box "corners" that the ellipse did not share were also due to the confidence intervals' failure to account for correlation within the data. The ellipse that the confidence region generated excludes those implausible corners by properly accounting for correlation, ruling them out. The ellipse also extends past the boxes in the direction of correlation and becomes more elongated as correlation increases. These differences are emphasized when visually comparing the area of the corners and elongated ellipses in the low and high correlation examples. At high $\rho$, a region that accounts for correlation can achieve consistent coverage while avoiding the wasted area a box provides.
 
 While univariate methods fail to account for correlation, they are easier to interpret than confidence regions. Considering a simulation with 3 variables, the confidence "ellipse" turns into a confidence "ellipsoid" in 3D. At 4 and above variables, the ability to conceptualize the results diminishes.
 
